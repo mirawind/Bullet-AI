@@ -66,6 +66,10 @@ export default function LoginPage() {
   const signInWithProvider = async (provider: "google" | "github") => {
     setLoading(true);
     setMessage(null);
+    // Let the client finish initializing first: recovering or refreshing a
+    // stored session deletes the PKCE code verifier, so a refresh that lands
+    // after signInWithOAuth writes it breaks /auth/callback.
+    await supabase.auth.getSession().catch(() => undefined);
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
