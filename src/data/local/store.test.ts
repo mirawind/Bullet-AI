@@ -554,7 +554,10 @@ describe("DataStore concurrency boundaries", () => {
 
   it("recovers a legacy token > 1 pending mutation after a refresh", async () => {
     const databaseName = `data-v2-refresh-test-${crypto.randomUUID()}`;
-    const firstRuntime = createStore(undefined, databaseName);
+    // Pin the clock: the runnable check below is evaluated as of 2026-07-10,
+    // so a mutation stamped with the real time would fall after it.
+    const now = () => new Date("2026-07-10T12:00:00.000Z");
+    const firstRuntime = createStore(now, databaseName);
     firstRuntime.beginUserSession("user-1");
     firstRuntime.beginUserSession("user-1");
     expect(firstRuntime.getUserSessionToken("user-1")).toBe(2);
@@ -582,7 +585,7 @@ describe("DataStore concurrency boundaries", () => {
     await legacyDatabase.close();
     await firstRuntime.close();
 
-    const refreshedRuntime = createStore(undefined, databaseName);
+    const refreshedRuntime = createStore(now, databaseName);
     refreshedRuntime.beginUserSession("user-1");
     expect(refreshedRuntime.getUserSessionToken("user-1")).toBe(1);
 
